@@ -5,3 +5,36 @@ This procedure will cover the following points
 - Install etcd as a Docker container in RHEL
 - Add etcd Nodes to existing etcd Cluster
 - Replace existing etcd Cluster with new Nodes
+
+=== Install etcd as a Docker container
+
+    # yum --showduplicates install -y etcd-3.0.15-1.el7.x86_64
+    # iptables -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 2379 -j ACCEPT
+    # iptables -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 2380 -j ACCEPT
+    # Add IPTABLES rules before COMMIT to /etc/sysconfig/iptables
+
+=== Add the new etcd Node to the existing Cluster
+
+    # From one of the existing etcd Nodes do the following
+
+      # cd /etc/etcd
+      # export NEW_ETCD="{new etcd node hostname}"
+      # export CN=$NEW_ETCD
+      # export SAN="IP:$(getent hosts $NEW_ETCD | awk {'print $1'})"
+      # export PREFIX="./generated_certs/etcd-$CN/"
+
+      # openssl req -new -keyout ${PREFIX}server.key -config ca/openssl.cnf -out ${PREFIX}server.csr -reqexts etcd_v3_req -batch -nodes -subj /CN=$CN
+      # openssl ca -name etcd_ca -config ca/openssl.cnf -out ${PREFIX}server.crt -in ${PREFIX}server.csr -extensions etcd_v3_ca_server -batch
+
+      # openssl req -new -keyout ${PREFIX}peer.key -config ca/openssl.cnf -out ${PREFIX}peer.csr -reqexts etcd_v3_req -batch -nodes -subj /CN=$CN
+      # openssl ca -name etcd_ca -config ca/openssl.cnf -out ${PREFIX}peer.crt -in ${PREFIX}peer.csr -extensions etcd_v3_ca_peer -batch
+
+      # cp ca.crt ${PREFIX}
+      # cp etcd.conf ${PREFIX}
+      # tar -czvf ${PREFIX}${CN}.tgz -C ${PREFIX} .
+
+      # scp ${PREFIX}${CN}.tgz  $CN:/etc/etcd/
+
+      # export ETCD_CA_HOST="$(hostname)"
+      # export NEW_ETCD_IP="$(getent hosts $NEW_ETCD | awk {'print $1'})"
+      # docker exec -it etcd_container etcdctl -C https://${ETCD_CA_HOST}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add ${NEW_ETCD} https://${NEW_ETCD_IP}:2380
