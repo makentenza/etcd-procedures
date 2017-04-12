@@ -1,0 +1,7 @@
+== Introduction
+
+This procedure will cover the following points
+
+- Install etcd as a Docker container in RHEL
+- Add etcd Nodes to existing etcd Cluster
+- Replace existing etcd Cluster with new Nodes
