@@ -38,4 +38,5 @@ This procedure will cover the following points
     # export ETCD_CA_HOST="$(hostname)"
     # export NEW_ETCD_IP="$(getent hosts $NEW_ETCD | awk {'print $1'})"
     # docker exec -it etcd_container etcdctl -C https://${ETCD_CA_HOST}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add ${NEW_ETCD} https://${NEW_ETCD_IP}:2380
-      *_Added member named $NEW_ETCD with ID xxxxxxxxxx to cluster_*
+
+*_Added member named $NEW_ETCD with ID xxxxxxxxxx to cluster_*
