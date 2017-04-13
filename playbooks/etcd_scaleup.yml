@@ -1,0 +1,59 @@
+---
+- name: Playbook to scale up an existing OCP etcd Cluster
+  hosts: new_etcd
+
+  tasks:
+
+    - name: Deploy etcd - Ensure IPTABLES rules for etcd are applied
+      iptables:
+        chain: OS_FIREWALL_ALLOW
+        ctstate: NEW
+        destination_port: "{{ item }}"
+        protocol: tcp
+        jump: ACCEPT
+      with_items:
+        - 2379
+        - 2380
+
+    - name: Deploy etcd - Ensure IPTABLES rules are persistent
+      lineinfile:
+        dest: /etc/sysconfig/iptables
+        state: present
+        line: -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport {{ item }} -j ACCEPT
+        insertbefore: "^COMMIT"
+        backup: yes
+      with_items:
+        - 2379
+        - 2380
+
+    - name: Deploy etcd - Ensure etcd directory structure exists
+      file:
+        state: directory
+        dest: "{{ item }}"
+        setype: svirt_sandbox_file_t
+      with_items:
+        - /etc/etcd
+        - /var/lib/etcd
+
+    - name: Deploy etcd - Ensure etcd_container systemd service exists and is enabled
+      template:
+        src: templates/etcd_container.service.j2
+        dest: /etc/systemd/system/etcd_container.service/etc/systemd/system/etcd_container.service
+        owner: root
+        group: root
+        mode: 0644
+
+
+# mkdir /etc/etcd
+# mkdir /var/lib/etcd
+# chcon -Rt svirt_sandbox_file_t /etc/etcd /var/lib/etcd
+# restorecon -Rv /etc/etcd /var/lib/etcd
+# src/etcd_container.service.sh $ETCD_IMAGE
+# systemctl daemon-reload
+# systemctl enable etcd_container# mkdir /etc/etcd
+# mkdir /var/lib/etcd
+# chcon -Rt svirt_sandbox_file_t /etc/etcd /var/lib/etcd
+# restorecon -Rv /etc/etcd /var/lib/etcd
+# src/etcd_container.service.sh $ETCD_IMAGE
+# systemctl daemon-reload
+# systemctl enable etcd_container
