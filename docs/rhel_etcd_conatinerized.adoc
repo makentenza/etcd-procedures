@@ -4,15 +4,33 @@ This procedure will cover the following points
 
 - Install etcd as a Docker container in RHEL
 - Add etcd Nodes to existing etcd Cluster
-- Replace existing etcd Cluster with new Nodes
+
+== Requirements
+
+- A working etcd Cluster with at least 1 Node
+- DNS working
+- Access to registry.access.redhat.com for image pulling
+- SSH access from the existing etcd Nodes to new etcd Nodes
+
 
 === Install etcd as a Docker container
 
-    # yum --showduplicates install -y etcd-3.0.15-1.el7.x86_64 ## will try to ommit this step as is not necesary, but need to double check if affects OCP upgrade process if removed
-    # export ETCD_IMAGE=$(docker ps | grep etcd | awk {'print $2'}) ## From one of the existing etcd Nodes
+NOTE: Check if etcd needs to be installed in order to perform OCP upgrades
+
+==== From one of the existing etcd Nodes, get the etcd container image version we need to run
+
+    Containerized etcd:
+      # docker ps | grep etcd | awk {'print $2'}
+    Package etcd:
+      # etcd --version | grep etcd | awk {'print "registry.access.redhat.com/rhel7/etcd:"$3'}
+
+==== Deploy etcd in the new Node
+
+    # export ETCD_IMAGE={output image from previuos step}
     # iptables -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 2379 -j ACCEPT
     # iptables -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 2380 -j ACCEPT
-    # Add IPTABLES rules before COMMIT to /etc/sysconfig/iptables
+
+WARNING: Add IPTABLES rules before COMMIT line to /etc/sysconfig/iptables
 
     # mkdir /etc/etcd
     # mkdir /var/lib/etcd
@@ -28,11 +46,11 @@ This procedure will cover the following points
 ==== From one of the existing etcd Nodes do the following
 
     # cd /etc/etcd
-    # export NEW_ETCD="{new etcd node hostname}"
+    # export NEW_ETCD="{new etcd node FQDN hostname}"
     # export CN=$NEW_ETCD
-    # export SAN="IP:$(getent hosts $NEW_ETCD | awk {'print $1'})" ## Add reuirement host resolution
+    # export SAN="IP:$(getent hosts $NEW_ETCD | awk {'print $1'})"
     # export PREFIX="./generated_certs/etcd-$CN/"
-    # mkdir $PREFIX ##Not in https://access.redhat.com/articles/2650151 documentation
+    # mkdir $PREFIX
 
     # openssl req -new -keyout ${PREFIX}server.key -config ca/openssl.cnf -out ${PREFIX}server.csr -reqexts etcd_v3_req -batch -nodes -subj /CN=$CN
     # openssl ca -name etcd_ca -config ca/openssl.cnf -out ${PREFIX}server.crt -in ${PREFIX}server.csr -extensions etcd_v3_ca_server -batch
