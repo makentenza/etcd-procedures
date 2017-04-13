@@ -2,7 +2,7 @@
 
 ## Project Description
 
-The aim of this repository is to generate the required tools (ansible playbooks and/or automated scripts) and documentation to operate an etcd cluster for Openshift Container Platform and cover the following topics
+The aim of this repository is to generate the required tools (ansible playbooks and/or automated scripts) and documentation to operate an etcd cluster for **Openshift Container Platform** and cover the following topics
 
 * Add new member to an existing Cluster
 * Remove a member from an existing Cluster

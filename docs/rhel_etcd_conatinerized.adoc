@@ -20,9 +20,8 @@ This procedure will cover the following points
     # restorecon -Rv /etc/etcd /var/lib/etcd
 
     # src/etcd_container.service.sh $ETCD_IMAGE
-    # systemctl daemon realod
+    # systemctl daemon-reload
     # systemctl enable etcd_container
-    # systemctl stop etcd_container ## check if necesary
 
 === Add the new etcd Node to the existing Cluster
 
@@ -31,8 +30,9 @@ This procedure will cover the following points
     # cd /etc/etcd
     # export NEW_ETCD="{new etcd node hostname}"
     # export CN=$NEW_ETCD
-    # export SAN="IP:$(getent hosts $NEW_ETCD | awk {'print $1'})"
+    # export SAN="IP:$(getent hosts $NEW_ETCD | awk {'print $1'})" ## Add reuirement host resolution
     # export PREFIX="./generated_certs/etcd-$CN/"
+    # mkdir $PREFIX ##Not in https://access.redhat.com/articles/2650151 documentation
 
     # openssl req -new -keyout ${PREFIX}server.key -config ca/openssl.cnf -out ${PREFIX}server.csr -reqexts etcd_v3_req -batch -nodes -subj /CN=$CN
     # openssl ca -name etcd_ca -config ca/openssl.cnf -out ${PREFIX}server.crt -in ${PREFIX}server.csr -extensions etcd_v3_ca_server -batch
@@ -51,16 +51,23 @@ This procedure will cover the following points
     # docker exec -it etcd_container etcdctl -C https://${ETCD_CA_HOST}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add ${NEW_ETCD} https://${NEW_ETCD_IP}:2380 > /etc/etcd/${NEW_ETCD}.added
     # scp /etc/etcd/${NEW_ETCD}.added $CN:/etc/etcd/
 
-    # export NODE_ID="$(cat /etc/etcd/${NEW_ETCD}.added | grep Added | awk {'print $7'})"
-    # docker exec -it etcd_container etcdctl backup --keep-cluster-id --node-id ${NODE_ID} --data-dir /var/lib/etcd --backup-dir /var/lib/etcd/$NEW_ETCD-backup
-    # tar -cvf $NEW_ETCD-backup.tar.gz -C /var/lib/etcd/$NEW_ETCD-backup/ .
-    # scp $NEW_ETCD-backup.tar.gz $NEW_ETCD:/var/lib/etcd/
 
 ==== From the new etcd Node do the following
 
-    # tar -xf /etc/etcd/*.tgz -C /etc/etcd/ --overwrite
+    # export NEW_ETCD="{new etcd node hostname}"
+    # export NEW_ETCD_IP="$(getent hosts $NEW_ETCD | awk {'print $1'})"
+
+    # groupadd etcd
+    # useradd -c "etcd user" -d /var/lib/etcd -s /sbin/nologin -g etcd etcd
+
+    # tar -xf /etc/etcd/*.tgz -C /etc/etcd/ --overwrite ## Check why after tar file is no longer valid
     # chown etcd:etcd /etc/etcd/*
 
-    # rm -rf /var/lib/etcd/member
-    # tar -xf /var/lib/etcd/*.tar.gz -C /var/lib/etcd/
-    # chown -R etcd:etcd /var/lib/etcd/
+    # src/etcdconf.vars.sh
+
+    # systemctl start etcd_container
+
+==== From the initial existing etcd Node do the following to check the status
+
+    # docker exec -it etcd_container etcdctl -C https://${ETCD_CA_HOST}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member list
+    # docker exec -it etcd_container etcdctl -C https://${ETCD_CA_HOST}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key cluster-health

@@ -10,7 +10,7 @@ usage(){
 if [[ "$1" == "" ]];then
   usage
 else
-  cat << EOF > /etc/systemd/system/etcd_container.service
+  cat > /etc/systemd/system/etcd_container.service <<EOF
   [Unit]
   Description=The Etcd Server container
   After=docker.service
@@ -28,5 +28,5 @@ else
 
   [Install]
   WantedBy=docker.service
-  EOF
+EOF
 fi
