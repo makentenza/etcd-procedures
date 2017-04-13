@@ -48,7 +48,7 @@ WARNING: Add IPTABLES rules before COMMIT line to /etc/sysconfig/iptables
     # cd /etc/etcd
     # export NEW_ETCD="{new etcd node FQDN hostname}"
     # export CN=$NEW_ETCD
-    # export SAN="IP:$(dig +short $NEW_ETCD)"
+    # export SAN="IP:$(dig +short A $NEW_ETCD)"
     # export PREFIX="./generated_certs/etcd-$CN/"
     # mkdir $PREFIX
 
@@ -65,7 +65,7 @@ WARNING: Add IPTABLES rules before COMMIT line to /etc/sysconfig/iptables
     # scp ${PREFIX}${CN}.tgz  $CN:/etc/etcd/
 
     # export ETCD_CA_HOST="$(hostname)"
-    # export NEW_ETCD_IP="$(dig +short $NEW_ETCD)"
+    # export NEW_ETCD_IP="$(dig +short A $NEW_ETCD)"
     # docker exec -it etcd_container etcdctl -C https://${ETCD_CA_HOST}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add ${NEW_ETCD} https://${NEW_ETCD_IP}:2380 > /etc/etcd/${NEW_ETCD}.added
     # scp /etc/etcd/${NEW_ETCD}.added $CN:/etc/etcd/
 
@@ -73,7 +73,7 @@ WARNING: Add IPTABLES rules before COMMIT line to /etc/sysconfig/iptables
 ==== From the new etcd Node do the following
 
     # export NEW_ETCD="{new etcd node hostname}"
-    # export NEW_ETCD_IP="$(dig +short $NEW_ETCD)"
+    # export NEW_ETCD_IP="$(dig +short A $NEW_ETCD)"
 
     # groupadd etcd
     # useradd -c "etcd user" -d /var/lib/etcd -s /sbin/nologin -g etcd etcd
