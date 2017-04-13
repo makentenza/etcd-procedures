@@ -8,10 +8,21 @@ This procedure will cover the following points
 
 === Install etcd as a Docker container
 
-    # yum --showduplicates install -y etcd-3.0.15-1.el7.x86_64
+    # yum --showduplicates install -y etcd-3.0.15-1.el7.x86_64 ## will try to ommit this step as is not necesary, but need to double check if affects OCP upgrade process if removed
+    # export ETCD_IMAGE=$(docker ps | grep etcd | awk {'print $2'}) ## From one of the existing etcd Nodes
     # iptables -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 2379 -j ACCEPT
     # iptables -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 2380 -j ACCEPT
     # Add IPTABLES rules before COMMIT to /etc/sysconfig/iptables
+
+    # mkdir /etc/etcd
+    # mkdir /var/lib/etcd
+    # chcon -Rt svirt_sandbox_file_t /etc/etcd /var/lib/etcd
+    # restorecon -Rv /etc/etcd /var/lib/etcd
+
+    # src/etcd_container.service.sh $ETCD_IMAGE
+    # systemctl daemon realod
+    # systemctl enable etcd_container
+    # systemctl stop etcd_container ## check if necesary
 
 === Add the new etcd Node to the existing Cluster
 
@@ -37,6 +48,19 @@ This procedure will cover the following points
 
     # export ETCD_CA_HOST="$(hostname)"
     # export NEW_ETCD_IP="$(getent hosts $NEW_ETCD | awk {'print $1'})"
-    # docker exec -it etcd_container etcdctl -C https://${ETCD_CA_HOST}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add ${NEW_ETCD} https://${NEW_ETCD_IP}:2380
+    # docker exec -it etcd_container etcdctl -C https://${ETCD_CA_HOST}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add ${NEW_ETCD} https://${NEW_ETCD_IP}:2380 > /etc/etcd/${NEW_ETCD}.added
+    # scp /etc/etcd/${NEW_ETCD}.added $CN:/etc/etcd/
 
-*_Added member named $NEW_ETCD with ID xxxxxxxxxx to cluster_*
+    # export NODE_ID="$(cat /etc/etcd/${NEW_ETCD}.added | grep Added | awk {'print $7'})"
+    # docker exec -it etcd_container etcdctl backup --keep-cluster-id --node-id ${NODE_ID} --data-dir /var/lib/etcd --backup-dir /var/lib/etcd/$NEW_ETCD-backup
+    # tar -cvf $NEW_ETCD-backup.tar.gz -C /var/lib/etcd/$NEW_ETCD-backup/ .
+    # scp $NEW_ETCD-backup.tar.gz $NEW_ETCD:/var/lib/etcd/
+
+==== From the new etcd Node do the following
+
+    # tar -xf /etc/etcd/*.tgz -C /etc/etcd/ --overwrite
+    # chown etcd:etcd /etc/etcd/*
+
+    # rm -rf /var/lib/etcd/member
+    # tar -xf /var/lib/etcd/*.tar.gz -C /var/lib/etcd/
+    # chown -R etcd:etcd /var/lib/etcd/
