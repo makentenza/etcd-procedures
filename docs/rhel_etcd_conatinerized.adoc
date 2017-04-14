@@ -1,8 +1,8 @@
 == Introduction
 
-This procedure will cover the following points
+This procedure will cover the following points in order to scale up an existing etcd Cluster
 
-- Install etcd as a Docker container in RHEL
+- Install etcd as a Docker container in RHEL or RHEL Atomic
 - Add etcd Nodes to existing etcd Cluster
 
 == Requirements
@@ -84,6 +84,8 @@ WARNING: Add IPTABLES rules before COMMIT line to /etc/sysconfig/iptables
     # src/etcdconf.vars.sh
 
     # systemctl start etcd_container
+
+NOTE: As the etcd container must be pulled, review service logs until etcd process start: # journalctl -u etcd_container -f
 
 ==== From the initial existing etcd Node do the following to check the status
 
