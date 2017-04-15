@@ -65,10 +65,6 @@
         name: etcd_container.service
         state: stopped
 
-# Remove this --- Just for granular testing
-- hosts: new_etcd
-  gather_facts: True
-
 - name: Add new etcd Node(s) to the existing Cluster
   hosts: etcd
 
@@ -113,6 +109,51 @@
       with_items:
         - "{{ groups['new_etcd'] }}"
       when: inventory_hostname == play_hosts[0]
+
+- name: Copy generated certs to new etcd Nodes
+  hosts: new_etcd
+
+  tasks:
+
+    - name: Copy files
+      synchronize:
+        src: "{{ item.source}}"
+        dest: "{{ item.dest }}"
+      with_items:
+        - { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}/', dest: '/etc/etcd/' }
+        - { source: '/etc/etcd/ca.crt', dest: '/etc/etcd/ca.crt' }
+        - { source: '/etc/etcd/etcd.conf', dest: '/etc/etcd/etcd.conf' }
+      delegate_to: "{{ groups.etcd[0] }}"
+
+# Remove this --- Just for granular testing
+- name: Get host facts
+  hosts: new_etcd
+  gather_facts: True
+
+
+- name: Add new members to etcd
+  hosts: etcd
+
+  tasks:
+
+    - name: Create new member and save generated params
+      command: docker exec -i etcd_container etcdctl -C https://{{ ansible_nodename }}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add {{ hostvars[item]['ansible_nodename'] }} https://{{ hostvars[item]['ansible_default_ipv4']['address'] }}:2380
+      register: new_member
+      with_items:
+        - "{{ groups['new_etcd'] }}"
+      when: inventory_hostname == play_hosts[0]
+
+    - debug: msg="item.stdout={{item.stdout}}"
+      with_items: "{{ new_member.results }}"
+      when: inventory_hostname == play_hosts[0]
+
+#stdout_lines": [
+#            "Added member named newnode01.mak.lab with ID b28e6d2a8354d3b0 to cluster",
+#            "",
+#            "ETCD_NAME=\"newnode01.mak.lab\"",
+#            "ETCD_INITIAL_CLUSTER=\"newmaster02.mak.lab=https://172.19.5.40:2380,=https://172.19.5.39:2380,master02.mak.lab=https://172.19.5.17:2380,newmaster01.mak.lab=https://172.19.5.38:2380,newnode01.mak.lab=https://172.19.5.31:2380,master03.mak.lab=https://172.19.5.19:2380,master01.mak.lab=https://172.19.5.13:2380\"",
+#            "ETCD_INITIAL_CLUSTER_STATE=\"existing\""
+#        ], 
 
 #==== From one of the existing etcd Nodes do the following
 
