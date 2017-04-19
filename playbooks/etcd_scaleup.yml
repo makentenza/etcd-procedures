@@ -3,15 +3,6 @@
   hosts: etcd
   gather_facts: True
 
-#- name: Set some facts from existing etcd Node members
-#  hosts: etcd
-
-#  tasks:
-
-#    - debug:
-#        msg: "The etcd version is {{ ansible_local.openshift.etcd.etcd_image }}"
-#      when: inventory_hostname == play_hosts[0]
-
 - name: Configure and deploy etcd in new Node(s)
   hosts: new_etcd
   vars:
@@ -112,7 +103,23 @@
 
 - name: Copy generated certs to new etcd Nodes
   hosts: new_etcd
-
+  vars:
+    conf_values:
+      - reg: ^ETCD_NAME=
+        exp: ETCD_NAME="{{ ansible_nodename }}"
+      - reg: ^ETCD_INITIAL_CLUSTER=
+        exp: ETCD_INITIAL_CLUSTER=ETCD_INITIAL_CLUSTER="{{ new_member[3] }}"
+      - reg: ^ETCD_INITIAL_CLUSTER_STATE=
+        exp: ETCD_INITIAL_CLUSTER_STATE="{{ new_member[4] }}"
+      - reg: ^ETCD_LISTEN_PEER_URLS=
+        exp: ETCD_LISTEN_PEER_URLS=https://{{ ansible_default_ipv4.address }}:2380
+      - reg: ^ETCD_LISTEN_CLIENT_URLS=
+        exp: ETCD_LISTEN_CLIENT_URLS=https://{{ ansible_default_ipv4.address }}:2379
+      - reg: ^ETCD_INITIAL_ADVERTISE_PEER_URLS=
+        exp: ETCD_INITIAL_ADVERTISE_PEER_URLS=https://{{ ansible_default_ipv4.address }}:2380
+      - reg: ^ETCD_ADVERTISE_CLIENT_URLS=
+        exp: ETCD_ADVERTISE_CLIENT_URLS=https://{{ ansible_default_ipv4.address }}:2379
+        
   tasks:
 
     - name: Copy files
@@ -132,12 +139,6 @@
       notify:
       - new_etcd_facts
 
-    handlers:
-      - name: new_etcd_facts
-        set_fact:
-          entries: "{{ entries|default([]) + [ {'line': item} ] }}"
-        with_items: "{{ new_member.stdout_lines }}"
-
     - name: Ensure etcd group exists
       group:
         name: etcd
@@ -155,21 +156,20 @@
 
     - name: Ensure /etc/etcd/etcd.conf is correctly configured
       lineinfile:
-        
+        dest: /etc/etcd/etcd.conf
+        regexp: "{{ item.reg }}"
+        line: "{{ item.exp }}"
+      with_items:
+        - conf_values
+
+  handlers:
+    - name: new_etcd_facts
+      set_fact:
+        entries: "{{ entries|default([]) + [ {'line': item} ] }}"
+      with_items:
+        - "{{ new_member.stdout_lines }}"
 
 
 
-     ==== From the new etcd Node do the following
-
-         # export NEW_ETCD="{new etcd node hostname}"
-         # export NEW_ETCD_IP="$(dig +short A $NEW_ETCD)"
-
-         # groupadd etcd
-         # useradd -c "etcd user" -d /var/lib/etcd -s /sbin/nologin -g etcd etcd
-
-         # tar -xf /etc/etcd/*.tgz -C /etc/etcd/ --overwrite
-         # chown etcd:etcd /etc/etcd/*
-
-         # src/etcdconf.vars.sh
 
          # systemctl start etcd_container
