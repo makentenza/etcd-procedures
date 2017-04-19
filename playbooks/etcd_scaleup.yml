@@ -125,58 +125,51 @@
         - { source: '/etc/etcd/etcd.conf', dest: '/etc/etcd/etcd.conf' }
       delegate_to: "{{ groups.etcd[0] }}"
 
-# Remove this --- Just for granular testing
-- name: Get host facts
-  hosts: new_etcd
-  gather_facts: True
-
-
-- name: Add new members to etcd
-  hosts: etcd
-
-  tasks:
-
     - name: Create new member and save generated params
-      command: docker exec -i etcd_container etcdctl -C https://{{ ansible_nodename }}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add {{ hostvars[item]['ansible_nodename'] }} https://{{ hostvars[item]['ansible_default_ipv4']['address'] }}:2380
+      command: docker exec -i etcd_container etcdctl -C https://{{ groups.etcd[0] }}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add {{ ansible_nodename }} https://{{ ansible_default_ipv4.address }}:2380
       register: new_member
-      with_items:
-        - "{{ groups['new_etcd'] }}"
-      when: inventory_hostname == play_hosts[0]
+      delegate_to: "{{ groups.etcd[0] }}"
+      notify:
+      - new_etcd_facts
 
-    - debug: msg="item.stdout={{item.stdout}}"
-      with_items: "{{ new_member.results }}"
-      when: inventory_hostname == play_hosts[0]
+    handlers:
+      - name: new_etcd_facts
+        set_fact:
+          entries: "{{ entries|default([]) + [ {'line': item} ] }}"
+        with_items: "{{ new_member.stdout_lines }}"
 
-#stdout_lines": [
-#            "Added member named newnode01.mak.lab with ID b28e6d2a8354d3b0 to cluster",
-#            "",
-#            "ETCD_NAME=\"newnode01.mak.lab\"",
-#            "ETCD_INITIAL_CLUSTER=\"newmaster02.mak.lab=https://172.19.5.40:2380,=https://172.19.5.39:2380,master02.mak.lab=https://172.19.5.17:2380,newmaster01.mak.lab=https://172.19.5.38:2380,newnode01.mak.lab=https://172.19.5.31:2380,master03.mak.lab=https://172.19.5.19:2380,master01.mak.lab=https://172.19.5.13:2380\"",
-#            "ETCD_INITIAL_CLUSTER_STATE=\"existing\""
-#        ], 
+    - name: Ensure etcd group exists
+      group:
+        name: etcd
+        state: present
 
-#==== From one of the existing etcd Nodes do the following
+    - name: Ensure etcd user exists
+      user:
+        name: etcd
+        comment: etcd user
+        createhome: no
+        home: /var/lib/etcd
+        shell: /sbin/nologin
+        group: etcd
+        state: present
 
-    # cd /etc/etcd
-    # export NEW_ETCD="{new etcd node FQDN hostname}"
-    # export CN=$NEW_ETCD
-    # export SAN="IP:$(dig +short A $NEW_ETCD)"
-    # export PREFIX="./generated_certs/etcd-$CN/"
-    # mkdir $PREFIX
+    - name: Ensure /etc/etcd/etcd.conf is correctly configured
+      lineinfile:
+        
 
-    # openssl req -new -keyout ${PREFIX}server.key -config ca/openssl.cnf -out ${PREFIX}server.csr -reqexts etcd_v3_req -batch -nodes -subj /CN=$CN
-    # openssl ca -name etcd_ca -config ca/openssl.cnf -out ${PREFIX}server.crt -in ${PREFIX}server.csr -extensions etcd_v3_ca_server -batch
 
-    # openssl req -new -keyout ${PREFIX}peer.key -config ca/openssl.cnf -out ${PREFIX}peer.csr -reqexts etcd_v3_req -batch -nodes -subj /CN=$CN
-    # openssl ca -name etcd_ca -config ca/openssl.cnf -out ${PREFIX}peer.crt -in ${PREFIX}peer.csr -extensions etcd_v3_ca_peer -batch
 
-    # cp ca.crt ${PREFIX}
-    # cp etcd.conf ${PREFIX}
-    # tar -czvf ${PREFIX}${CN}.tgz -C ${PREFIX} .
+     ==== From the new etcd Node do the following
 
-    # scp ${PREFIX}${CN}.tgz  $CN:/etc/etcd/
+         # export NEW_ETCD="{new etcd node hostname}"
+         # export NEW_ETCD_IP="$(dig +short A $NEW_ETCD)"
 
-    # export ETCD_CA_HOST="$(hostname)"
-    # export NEW_ETCD_IP="$(dig +short A $NEW_ETCD)"
-    # docker exec -it etcd_container etcdctl -C https://${ETCD_CA_HOST}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add ${NEW_ETCD} https://${NEW_ETCD_IP}:2380 > /etc/etcd/${NEW_ETCD}.added
-    # scp /etc/etcd/${NEW_ETCD}.added $CN:/etc/etcd/
+         # groupadd etcd
+         # useradd -c "etcd user" -d /var/lib/etcd -s /sbin/nologin -g etcd etcd
+
+         # tar -xf /etc/etcd/*.tgz -C /etc/etcd/ --overwrite
+         # chown etcd:etcd /etc/etcd/*
+
+         # src/etcdconf.vars.sh
+
+         # systemctl start etcd_container
