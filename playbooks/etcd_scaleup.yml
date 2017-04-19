@@ -120,8 +120,12 @@
       command: docker exec -i etcd_container etcdctl -C https://{{ groups.etcd[0] }}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add {{ ansible_nodename }} https://{{ ansible_default_ipv4.address }}:2380
       register: new_member
       delegate_to: "{{ groups.etcd[0] }}"
-      notify:
-      - new_etcd_facts
+
+    - name: Create new facts from the etcd Cluster member
+      set_fact:
+        entries: "{{ entries|default([]) + [ {'line': item} ] }}"
+      with_items:
+        - "{{ new_member.stdout_lines }}"
 
     - name: Ensure etcd group exists
       group:

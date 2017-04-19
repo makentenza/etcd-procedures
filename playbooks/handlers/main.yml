@@ -1,6 +1,0 @@
----
-  - name: new_etcd_facts
-    set_fact:
-      entries: "{{ entries|default([]) + [ {'line': item} ] }}"
-    with_items:
-      - "{{ new_member.stdout_lines }}"
