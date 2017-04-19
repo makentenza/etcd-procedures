@@ -145,12 +145,12 @@
     - name: Ensure /etc/etcd/etcd.conf is correctly configured
       lineinfile:
         dest: /etc/etcd/etcd.conf
-        regexp: "{{ item.reg.line }}"
-        line: "{{ item.exp.line }}"
+        regexp: "{{ item.reg }}"
+        line: "{{ item.exp }}"
       with_items:
         - { reg: "^ETCD_NAME=", exp: "ETCD_NAME={{ ansible_nodename }}" }
-        - { reg: "^ETCD_INITIAL_CLUSTER=", exp: "ETCD_INITIAL_CLUSTER=ETCD_INITIAL_CLUSTER={{ etcd_entries[3] }}" }
-        - { reg: "^ETCD_INITIAL_CLUSTER_STATE=", exp: "ETCD_INITIAL_CLUSTER_STATE={{ etcd_entries[4] }}" }
+        - { reg: "^ETCD_INITIAL_CLUSTER=", exp: "ETCD_INITIAL_CLUSTER={{ etcd_entries[3].line }}" }
+        - { reg: "^ETCD_INITIAL_CLUSTER_STATE=", exp: "ETCD_INITIAL_CLUSTER_STATE={{ etcd_entries[4].line }}" }
         - { reg: "^ETCD_LISTEN_PEER_URLS=", exp: "ETCD_LISTEN_PEER_URLS=https://{{ ansible_default_ipv4.address }}:2380" }
         - { reg: "^ETCD_LISTEN_CLIENT_URLS=", exp: "ETCD_LISTEN_CLIENT_URLS=https://{{ ansible_default_ipv4.address }}:2379" }
         - { reg: "^ETCD_INITIAL_ADVERTISE_PEER_URLS=", exp: "ETCD_INITIAL_ADVERTISE_PEER_URLS=https://{{ ansible_default_ipv4.address }}:2380" }
