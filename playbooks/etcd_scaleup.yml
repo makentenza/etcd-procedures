@@ -145,8 +145,8 @@
     - name: Ensure /etc/etcd/etcd.conf is correctly configured
       lineinfile:
         dest: /etc/etcd/etcd.conf
-        regexp: "{{ item.reg }}"
-        line: "{{ item.exp }}"
+        regexp: "{{ item.reg.line }}"
+        line: "{{ item.exp.line }}"
       with_items:
         - { reg: "^ETCD_NAME=", exp: "ETCD_NAME={{ ansible_nodename }}" }
         - { reg: "^ETCD_INITIAL_CLUSTER=", exp: "ETCD_INITIAL_CLUSTER=ETCD_INITIAL_CLUSTER={{ etcd_entries[3] }}" }
