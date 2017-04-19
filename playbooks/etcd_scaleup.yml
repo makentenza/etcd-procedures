@@ -142,9 +142,6 @@
         group: etcd
         state: present
 
-    - debug: var=etcd_entries[3]
-    - debug: var=etcd_entries[4]
-
     - name: Ensure /etc/etcd/etcd.conf is correctly configured
       lineinfile:
         dest: /etc/etcd/etcd.conf
@@ -159,7 +156,7 @@
         - { reg: "^ETCD_INITIAL_ADVERTISE_PEER_URLS=", exp: "ETCD_INITIAL_ADVERTISE_PEER_URLS=https://{{ ansible_default_ipv4.address }}:2380" }
         - { reg: "^ETCD_ADVERTISE_CLIENT_URLS=", exp: "ETCD_ADVERTISE_CLIENT_URLS=https://{{ ansible_default_ipv4.address }}:2379" }
 
-
-
-
-         # systemctl start etcd_container
+    - name: Ensure etcd_container service is started
+      systemd:
+        name: etcd_container.service
+        state: started
