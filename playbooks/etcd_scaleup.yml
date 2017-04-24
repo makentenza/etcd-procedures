@@ -111,12 +111,27 @@
 
   tasks:
 
+    #- name: Copy files
+    #  synchronize:
+    #    src: "{{ item.source}}"
+    #    dest: "{{ item.dest }}"
+    #  with_items:
+    #    - { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}/', dest: '/etc/etcd/' }
+    #    - { source: '/etc/etcd/ca.crt', dest: '/etc/etcd/ca.crt' }
+    #    - { source: '/etc/etcd/etcd.conf', dest: '/etc/etcd/etcd.conf' }
+    #  delegate_to: "{{ groups.etcd[0] }}"
+
     - name: Copy files
-      synchronize:
+      copy:
         src: "{{ item.source}}"
         dest: "{{ item.dest }}"
       with_items:
-        - { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}/', dest: '/etc/etcd/' }
+        - { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}/server.key', dest: '/etc/etcd/server.key' }
+        - { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}/server.csr', dest: '/etc/etcd/server.csr' }
+        - { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}/server.crt', dest: '/etc/etcd/server.crt' }
+        - { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}/peer.key', dest: '/etc/etcd/peer.key' }
+        - { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}/peer.csr', dest: '/etc/etcd/peer.csr' }
+        - { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}/peer.crt', dest: '/etc/etcd/peer.crt' }
         - { source: '/etc/etcd/ca.crt', dest: '/etc/etcd/ca.crt' }
         - { source: '/etc/etcd/etcd.conf', dest: '/etc/etcd/etcd.conf' }
       delegate_to: "{{ groups.etcd[0] }}"
