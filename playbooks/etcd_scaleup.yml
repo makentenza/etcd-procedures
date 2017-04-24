@@ -10,6 +10,11 @@
 
   tasks:
 
+    - name: Set etcd_version var if fact does not exist
+      set_fact:
+        etcd_version: "registry.access.redhat.com/rhel7/etcd:latest"
+      when: etcd_version is undefined
+
     - name: Deploy etcd - Ensure IPTABLES rules for etcd are applied
       iptables:
         chain: OS_FIREWALL_ALLOW
