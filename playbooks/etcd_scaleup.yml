@@ -145,6 +145,7 @@
       unarchive:
         src: /etc/etcd/etcd-{{ ansible_nodename }}.tgz
         dest: /etc/etcd
+        remote_src: yes
 
     - name: Create new member and save generated params
       command: docker exec -i etcd_container etcdctl -C https://{{ groups.etcd[0] }}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add {{ ansible_nodename }} https://{{ ansible_default_ipv4.address }}:2380
