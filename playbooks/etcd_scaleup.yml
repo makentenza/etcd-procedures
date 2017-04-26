@@ -109,7 +109,7 @@
     - name: Copy Certificate Authority
       copy:
         src: /etc/etcd/ca.crt
-        dest: /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}.tgz
+        dest: /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}
         remote_src: true
       with_items:
         - "{{ groups['new_etcd'] }}"
