@@ -75,7 +75,7 @@
       when: inventory_hostname == play_hosts[0]
 
     - name: Create server.csr and server.key
-      shell: openssl req -new -keyout /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/server.key -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/server.csr -reqexts etcd_v3_req -batch -nodes -subj /CN={{ hostvars[item]['ansible_nodename'] }}
+      command: openssl req -new -keyout /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/server.key -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/server.csr -reqexts etcd_v3_req -batch -nodes -subj /CN={{ hostvars[item]['ansible_nodename'] }}
       environment:
         SAN: IP:{{ hostvars[item]['ansible_default_ipv4']['address'] }}
       with_items:
@@ -83,7 +83,7 @@
       when: inventory_hostname == play_hosts[0]
 
     - name: Create server.crt
-      shell: openssl ca -name etcd_ca -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/server.crt -in /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/server.csr -extensions etcd_v3_ca_server -batch
+      command: openssl ca -name etcd_ca -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/server.crt -in /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/server.csr -extensions etcd_v3_ca_server -batch
       environment:
         SAN: IP:{{ hostvars[item]['ansible_default_ipv4']['address'] }}
       with_items:
@@ -91,7 +91,7 @@
       when: inventory_hostname == play_hosts[0]
 
     - name: Create peer.csr and peer.key
-      shell: openssl req -new -keyout /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.key -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.csr -reqexts etcd_v3_req -batch -nodes -subj /CN={{ hostvars[item]['ansible_nodename'] }}
+      command: openssl req -new -keyout /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.key -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.csr -reqexts etcd_v3_req -batch -nodes -subj /CN={{ hostvars[item]['ansible_nodename'] }}
       environment:
         SAN: IP:{{ hostvars[item]['ansible_default_ipv4']['address'] }}
       with_items:
@@ -99,7 +99,7 @@
       when: inventory_hostname == play_hosts[0]
 
     - name: Create peer.crt
-      shell: openssl ca -name etcd_ca -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.crt -in /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.csr -extensions etcd_v3_ca_server -batch
+      command: openssl ca -name etcd_ca -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.crt -in /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.csr -extensions etcd_v3_ca_server -batch
       environment:
         SAN: IP:{{ hostvars[item]['ansible_default_ipv4']['address'] }}
       with_items:
