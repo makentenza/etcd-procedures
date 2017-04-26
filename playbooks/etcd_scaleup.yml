@@ -106,13 +106,14 @@
         - "{{ groups['new_etcd'] }}"
       when: inventory_hostname == play_hosts[0]
 
-    #- name: Compress generated certs
-    #  archive:
-    #    src: /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}
-    #    dest: /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}.tgz
-    #  with_items:
-    #    - "{{ groups['new_etcd'] }}"
-    #  when: inventory_hostname == play_hosts[0]
+    - name: Copy Certificate Authority
+      copy:
+        src: /etc/etcd/ca.crt
+        dest: /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}.tgz
+        remote_src: true
+      with_items:
+        - "{{ groups['new_etcd'] }}"
+      when: inventory_hostname == play_hosts[0]
 
     - name: Compress generated certs
       command: tar -czvf /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}.tgz -C /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }} .
@@ -131,7 +132,6 @@
         dest: "{{ item.dest }}"
       with_items:
         - { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}.tgz', dest: '/etc/etcd/' }
-        - { source: '/etc/etcd/ca.crt', dest: '/etc/etcd/ca.crt' }
         - { source: '/etc/etcd/etcd.conf', dest: '/etc/etcd/etcd.conf' }
       delegate_to: "{{ groups.etcd[0] }}"
 
