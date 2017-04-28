@@ -115,12 +115,6 @@
         - "{{ groups['new_etcd'] }}"
       when: inventory_hostname == play_hosts[0]
 
-  #  - name: Compress generated certs
-  #    command: tar -czvf /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}.tgz -C /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }} .
-  #    with_items:
-  #      - "{{ groups['new_etcd'] }}"
-  #    when: inventory_hostname == play_hosts[0]
-
 - name: Copy generated certs to new etcd Nodes
   hosts: new_etcd
 
@@ -135,12 +129,6 @@
         - { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}/', dest: '/etc/etcd/' }
         - { source: '/etc/etcd/etcd.conf', dest: '/etc/etcd/etcd.conf' }
       delegate_to: "{{ groups.etcd[0] }}"
-
-    #- name: Uncompress generated certs
-    #  unarchive:
-    #    src: /etc/etcd/etcd-{{ ansible_nodename }}.tgz
-    #    dest: /etc/etcd
-    #    remote_src: yes
 
     - name: Create new member and save generated params
       command: docker exec -i etcd_container etcdctl -C https://{{ groups.etcd[0] }}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add {{ ansible_nodename }} https://{{ ansible_default_ipv4.address }}:2380
