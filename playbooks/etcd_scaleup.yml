@@ -76,7 +76,6 @@
 
     - name: Create server.csr and server.key
       command: openssl req -new -keyout /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/server.key -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/server.csr -reqexts etcd_v3_req -batch -nodes -subj /CN={{ hostvars[item]['ansible_nodename'] }}
-      #command: openssl req -new -keyout /etc/etcd/generated_certs/etcd-newmaster01.mak.lab/server.key -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-newmaster01.mak.lab/server.csr -reqexts etcd_v3_req -batch -nodes -subj /CN=newmaster01.mak.lab
       environment:
         SAN: IP:{{ hostvars[item]['ansible_default_ipv4']['address'] }}
       with_items:
@@ -85,7 +84,6 @@
 
     - name: Create server.crt
       command: openssl ca -name etcd_ca -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/server.crt -in /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/server.csr -extensions etcd_v3_ca_server -batch
-      #command: openssl ca -name etcd_ca -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-newmaster01.mak.lab/server.crt -in /etc/etcd/generated_certs/etcd-newmaster01.mak.lab/server.csr -extensions etcd_v3_ca_server -batch
       environment:
         SAN: IP:{{ hostvars[item]['ansible_default_ipv4']['address'] }}
       with_items:
@@ -94,7 +92,6 @@
 
     - name: Create peer.csr and peer.key
       command: openssl req -new -keyout /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.key -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.csr -reqexts etcd_v3_req -batch -nodes -subj /CN={{ hostvars[item]['ansible_nodename'] }}
-      #command: openssl req -new -keyout /etc/etcd/generated_certs/etcd-newmaster01.mak.lab/peer.key -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-newmaster01.mak.lab/peer.csr -reqexts etcd_v3_req -batch -nodes -subj /CN=newmaster01.mak.lab
       environment:
         SAN: IP:{{ hostvars[item]['ansible_default_ipv4']['address'] }}
       with_items:
@@ -103,7 +100,6 @@
 
     - name: Create peer.crt
       command: openssl ca -name etcd_ca -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.crt -in /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.csr -extensions etcd_v3_ca_peer -batch
-      #command: openssl ca -name etcd_ca -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-newmaster01.mak.lab/peer.crt -in /etc/etcd/generated_certs/etcd-newmaster01.mak.lab/peer.csr -extensions etcd_v3_ca_peer -batch
       environment:
         SAN: IP:{{ hostvars[item]['ansible_default_ipv4']['address'] }}
       with_items:
@@ -184,6 +180,12 @@
         - { reg: "^ETCD_LISTEN_CLIENT_URLS=", exp: "ETCD_LISTEN_CLIENT_URLS=https://{{ ansible_default_ipv4.address }}:2379" }
         - { reg: "^ETCD_INITIAL_ADVERTISE_PEER_URLS=", exp: "ETCD_INITIAL_ADVERTISE_PEER_URLS=https://{{ ansible_default_ipv4.address }}:2380" }
         - { reg: "^ETCD_ADVERTISE_CLIENT_URLS=", exp: "ETCD_ADVERTISE_CLIENT_URLS=https://{{ ansible_default_ipv4.address }}:2379" }
+
+    - name: Remove quotation marks from etcd.conf generated file
+      replace:
+        dest: /etc/etcd/etcd.conf
+        regexp: '"'
+        replace: ''
 
     - name: Ensure files have the correct owner
       file:
