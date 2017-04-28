@@ -132,7 +132,7 @@
         dest: "{{ item.dest }}"
       with_items:
         #- { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}.tgz', dest: '/etc/etcd/' }
-        - { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}/*', dest: '/etc/etcd/' }
+        - { source: '/etc/etcd/generated_certs/etcd-{{ ansible_nodename }}/', dest: '/etc/etcd/' }
         - { source: '/etc/etcd/etcd.conf', dest: '/etc/etcd/etcd.conf' }
       delegate_to: "{{ groups.etcd[0] }}"
 
