@@ -136,11 +136,19 @@
       delegate_to: "{{ groups.etcd[0] }}"
       when: inventory_hostname == play_hosts[0]
 
+    - name: Wait to etcd be informed about the new member(s)
+      command: sleep 10
+      when: inventory_hostname == play_hosts[1]
+
     - name: Create new member and save generated params
       command: docker exec -i etcd_container etcdctl -C https://{{ groups.etcd[0] }}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add {{ ansible_nodename }} https://{{ ansible_default_ipv4.address }}:2380
       register: new_member
       delegate_to: "{{ groups.etcd[0] }}"
       when: inventory_hostname == play_hosts[1]
+
+    - name: Wait to etcd be informed about the new member(s)
+      command: sleep 10
+      when: inventory_hostname == play_hosts[2]
 
     - name: Create new member and save generated params
       command: docker exec -i etcd_container etcdctl -C https://{{ groups.etcd[0] }}:2379 --ca-file=/etc/etcd/ca.crt --cert-file=/etc/etcd/peer.crt --key-file=/etc/etcd/peer.key member add {{ ansible_nodename }} https://{{ ansible_default_ipv4.address }}:2380
