@@ -195,6 +195,10 @@
         dest: /etc/etcd
         recurse: yes
 
+    - name: Wait to etcd be informed abou the new member(s)
+      command: sleep 10
+      when: inventory_hostname == play_hosts[0]
+
     - name: Ensure etcd_container service is started
       systemd:
         name: etcd_container.service
