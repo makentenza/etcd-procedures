@@ -7,8 +7,13 @@
   hosts: new_etcd
   vars:
     etcd_version: "{{ hostvars[groups['etcd'][0]]['ansible_local']['openshift']['etcd']['etcd_image'] }}"
+    num_hosts: "{{ groups['new_etcd'] | length }}"
 
   tasks:
+
+    - name: Validate the number of new ETCD Nodes
+      fail: msg="For etc Cluster integrity reasons, just 1 member can be added at the same time"
+      when: num_hosts | int != 1
 
     - name: Set etcd_version var if fact does not exist
       set_fact:
