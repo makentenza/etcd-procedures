@@ -102,7 +102,7 @@
       when: inventory_hostname == play_hosts[0]
 
     - name: Create peer.crt
-      command: openssl ca -name etcd_ca -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.crt -in /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.csr -extensions etcd_v3_ca_server -batch
+      command: openssl ca -name etcd_ca -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.crt -in /etc/etcd/generated_certs/etcd-{{ hostvars[item]['ansible_nodename'] }}/peer.csr -extensions etcd_v3_ca_peer -batch
       #command: openssl ca -name etcd_ca -config /etc/etcd/ca/openssl.cnf -out /etc/etcd/generated_certs/etcd-newmaster01.mak.lab/peer.crt -in /etc/etcd/generated_certs/etcd-newmaster01.mak.lab/peer.csr -extensions etcd_v3_ca_peer -batch
       environment:
         SAN: IP:{{ hostvars[item]['ansible_default_ipv4']['address'] }}
