@@ -9,4 +9,4 @@ These playbooks will identify the etcd members to operate by adding the followin
 
 ## Playbooks
 
-* etcd_scaleup.yml: automatically scales up an existing etcd cluster with a new member included in [new_etcd] group
+* **etcd_scaleup.yml**: automatically scales up an existing etcd cluster with a new member included in [new_etcd] group
